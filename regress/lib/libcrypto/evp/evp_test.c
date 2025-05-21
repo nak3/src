@@ -1099,7 +1099,7 @@ evp_kdf_hkdf_basic(void)
 
 	failed = 0;
 
-err:
+ err:
 	EVP_PKEY_CTX_free(pctx);
 	return failed;
 }
