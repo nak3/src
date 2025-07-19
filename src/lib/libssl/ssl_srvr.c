@@ -2168,6 +2168,21 @@ ssl3_send_server_certificate(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->s3->hs.state == SSL3_ST_SW_CERT_A) {
+		// TODO(nak3)
+		if (s->cert->cert_cb != NULL) {
+			int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+			if (cb_ret == 0) {
+//				SSLerror(s, SSL_R_CERT_CB_ERROR);
+				return 0;
+			}
+
+			if (cb_ret < 0) {
+				// 一時停止には未対応なので、エラーとして扱う
+//				SSLerror(s, SSL_R_CERT_CB_ERROR);
+				return 0;
+			}
+		}
+
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return (0);

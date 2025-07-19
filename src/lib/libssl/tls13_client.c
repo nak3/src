@@ -867,6 +867,22 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	X509 *cert;
 	int i, ret = 0;
 
+	if (s->cert->cert_cb != NULL) {
+	    	// Call cert_cb to update the certificate.
+	    	ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+	    	if (ret == 0) {
+    //			SSLerror(s, SSL_R_CERT_CB_ERROR);
+			//
+	//	  	ssl_send_alert(ssl, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+	//	  	OPENSSL_PUT_ERROR(SSL, SSL_R_CERT_CB_ERROR);
+	//	  	return ssl_hs_error;
+		}
+	    	if (ret < 0) {
+	//	  	hs->tls13_state = state_send_client_certificate;
+	//	  	return ssl_hs_x509_lookup;
+	    	}
+	}
+
 	if (!tls13_client_select_certificate(ctx, &cpk, &sigalg))
 		goto err;
 

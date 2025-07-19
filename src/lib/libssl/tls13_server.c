@@ -639,6 +639,26 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	X509 *cert;
 	int i, ret = 0;
 
+
+	// TODO(nak3)
+/* Call cert_cb to allow application to set certificate dynamically */
+	if (s->cert->cert_cb != NULL) {
+		int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+		if (cb_ret == 0) {
+			ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
+			/* tls13_set_errorx(ctx, TLS13_ERR_CERT_CB_ERROR, 0, */
+			/* 		 "cert_cb returned 0", NULL); */
+			goto err;
+		}
+		if (cb_ret < 0) {
+			ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+			/* tls13_set_errorx(ctx, TLS13_ERR_CERT_CB_ERROR, 0, */
+			/* 		 "cert_cb returned negative", NULL); */
+			goto err;
+		}
+	}
+	// ----
+
 	if (!tls13_server_select_certificate(ctx, &cpk, &sigalg))
 		goto err;
 
