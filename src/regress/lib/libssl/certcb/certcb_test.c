@@ -5,16 +5,24 @@
 #include <stdio.h>
 #include <unistd.h>
 
-const char *server_cert_file;
-const char *server_key_file;
+struct cert_info {
+	const char *cert_path;
+	const char *key_path;
+};
 
 int cert_cb(SSL *ssl, void *arg) {
-	if (SSL_use_certificate_file(ssl, server_cert_file, SSL_FILETYPE_PEM) != 1) {
+	struct cert_info *ci = (struct cert_info *)arg;
+
+	fprintf(stderr, "[cert_cb] called with cert: %s, key: %s\n",
+		ci->cert_path, ci->key_path);
+
+	if (SSL_use_certificate_file(ssl, ci->cert_path, SSL_FILETYPE_PEM) != 1) {
 		fprintf(stderr, "[cert_cb] SSL_use_certificate_file failed\n");
 		ERR_print_errors_fp(stderr);
 		return 0;
 	}
-	if (SSL_use_PrivateKey_file(ssl, server_key_file, SSL_FILETYPE_PEM) != 1) {
+
+	if (SSL_use_PrivateKey_file(ssl, ci->key_path, SSL_FILETYPE_PEM) != 1) {
 		fprintf(stderr, "[cert_cb] SSL_use_PrivateKey_file failed\n");
 		ERR_print_errors_fp(stderr);
 		return 0;
@@ -29,6 +37,8 @@ main(int argc, char **argv)
 	SSL_CTX *server_ctx = NULL, *client_ctx = NULL;
 	SSL *server_ssl = NULL, *client_ssl = NULL;
 	BIO *client_bio = NULL, *server_bio = NULL;
+	struct cert_info certdata;
+
 	int ret = 1;
 
         if (argc != 3) {
@@ -37,8 +47,8 @@ main(int argc, char **argv)
                 exit(1);
         }
 
-        server_key_file = argv[1];
-        server_cert_file = argv[2];
+	certdata.key_path = argv[1];
+	certdata.cert_path = argv[2];
 
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
@@ -54,7 +64,7 @@ main(int argc, char **argv)
 	if (!server_ssl || !client_ssl)
 		goto cleanup;
 
-	SSL_set_cert_cb(server_ssl, cert_cb, NULL);
+	SSL_set_cert_cb(server_ssl, cert_cb, &certdata);
 
 	if (!BIO_new_bio_pair(&client_bio, 0, &server_bio, 0)) {
 		fprintf(stderr, "BIO_new_bio_pair failed\n");
