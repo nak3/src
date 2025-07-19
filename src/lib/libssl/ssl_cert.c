@@ -246,6 +246,10 @@ ssl_cert_dup(SSL_CERT *cert)
 		}
 	}
 
+	// TODO(nak3)
+    	ret->cert_cb = cert->cert_cb;
+     	ret->cert_cb_arg = cert->cert_cb_arg;
+
 	ret->security_cb = cert->security_cb;
 	ret->security_level = cert->security_level;
 	ret->security_ex_data = cert->security_ex_data;
@@ -271,6 +275,12 @@ ssl_cert_dup(SSL_CERT *cert)
 	return NULL;
 }
 
+// TODO(nak3)
+static void ssl_cert_set_cert_cb(SSL_CERT *cert, int (*cb)(SSL *ssl, void *arg),
+                                 void *arg) {
+	cert->cert_cb = cb;
+	cert->cert_cb_arg = arg;
+}
 
 void
 ssl_cert_free(SSL_CERT *c)
@@ -485,6 +495,24 @@ SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 	return NULL;
 }
 LSSL_ALIAS(SSL_dup_CA_list);
+
+// TODO(nak3)
+void SSL_CTX_set_cert_cb(SSL_CTX *ctx, int (*cb)(SSL *ssl, void *arg), void *arg) {
+      	if (!ctx->cert) {
+	    	return;
+	}
+	ssl_cert_set_cert_cb(ctx->cert, cb, arg);
+}
+LSSL_ALIAS(SSL_set_cert_cb);
+
+// TODO(nak3)
+void SSL_set_cert_cb(SSL *ssl, int (*cb)(SSL *ssl, void *arg), void *arg) {
+      	if (!ssl->cert) {
+	    	return;
+	}
+	ssl_cert_set_cert_cb(ssl->cert, cb, arg);
+}
+LSSL_ALIAS(SSL_set_cert_cb);
 
 void
 SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)

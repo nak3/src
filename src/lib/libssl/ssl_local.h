@@ -323,6 +323,20 @@ typedef struct ssl_cert_st {
 	void *security_ex_data; /* Not exposed in API. */
 
 	int references; /* >1 only if SSL_copy_session_id is used */
+
+// TODO(nak3)
+	/* XXX Callbacks */
+
+	/* Certificate setup callback: if set is called whenever a
+	 * certificate may be required (client or server). the callback
+	 * can then examine any appropriate parameters and setup any
+	 * certificates required. This allows advanced applications
+	 * to select certificates on the fly: for example based on
+	 * supported signature algorithms or curves.
+	 */
+	int (*cert_cb)(SSL *ssl, void *arg);
+	void *cert_cb_arg;
+
 } SSL_CERT;
 
 struct ssl_comp_st {
@@ -720,7 +734,12 @@ struct ssl_ctx_st {
 	int (*app_verify_callback)(X509_STORE_CTX *, void *);
 	    void *app_verify_arg;
 
-	/* get client cert callback */
+	/*
+	 * get client cert callback
+	 *
+	 * TODO:(nak3)
+	 * Deprecated: Use SSL_CTX_set_cert_cb or SSL_set_cert_cb instead.
+	 */
 	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
 	/* cookie generate callback */
@@ -940,8 +959,6 @@ struct ssl_st {
 	/* QUIC transport params we will send */
 	uint8_t *quic_transport_params;
 	size_t quic_transport_params_len;
-
-	/* XXX Callbacks */
 
 	/* true when we are actually in SSL_accept() or SSL_connect() */
 	int in_handshake;

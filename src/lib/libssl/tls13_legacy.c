@@ -171,7 +171,15 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	if (ret > 0)
 		return ret;
 
-	ssl->rwstate = SSL_NOTHING;
+	printf("ret = %d, ssl->rwstate=%d\n", ret, ssl->rwstate);
+	printf("changing in return code ? ssl->rwstate = %d\n", ssl->rwstate);
+
+	// TODO
+	if (ssl->rwstate != SSL_X509_LOOKUP) {
+		ssl->rwstate = SSL_NOTHING;
+	}
+
+	// ssl->rwstate = SSL_NOTHING;
 
 	switch (ret) {
 	case TLS13_IO_EOF:
@@ -434,6 +442,8 @@ tls13_legacy_accept(SSL *ssl)
 	ret = tls13_server_accept(ctx);
 	if (ret == TLS13_IO_USE_LEGACY)
 		return ssl->method->ssl_accept(ssl);
+
+	printf("@@@ tls13_legacy_accept 2\n");
 
 	ret = tls13_legacy_return_code(ssl, ret);
 

@@ -867,6 +867,24 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	X509 *cert;
 	int i, ret = 0;
 
+//	TODO(nak3)
+
+	printf("@@@ tls13_client_certificate_send\n");
+	if (s->cert->cert_cb != NULL) {
+		printf("@@@ tls13 client\n");
+	    	// Call cert_cb to update the certificate.
+	    	ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+	    	if (ret == 0) {
+    			SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+			goto err;
+		}
+	    	if (ret < 0) {
+			s->rwstate = SSL_X509_LOOKUP;
+			goto err;
+	    	}
+		s->rwstate = SSL_NOTHING;
+	}
+
 	if (!tls13_client_select_certificate(ctx, &cpk, &sigalg))
 		goto err;
 

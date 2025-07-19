@@ -2615,6 +2615,12 @@ SSL_get_error(const SSL *s, int i)
 	if (i > 0)
 		return (SSL_ERROR_NONE);
 
+	printf("SSL_get_error 1 s->rwstate=%d\n", s->rwstate);
+	/* if (SSL_want_x509_lookup(s)) { */
+	/* 	printf("SSL_get_error lookup ok\n"); */
+	/* 	return (SSL_ERROR_WANT_X509_LOOKUP); */
+	/* } */
+
 	/*
 	 * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake
 	 * etc, where we do encode the error.
@@ -2673,7 +2679,7 @@ SSL_get_error(const SSL *s, int i)
 				return (SSL_ERROR_SYSCALL);
 		}
 	}
-
+	printf("SSL_get_error 2/./\n");
 	if (SSL_want_x509_lookup(s))
 		return (SSL_ERROR_WANT_X509_LOOKUP);
 

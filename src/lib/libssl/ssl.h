@@ -1152,6 +1152,10 @@ int	(*SSL_get_verify_callback(const SSL *s))(int, X509_STORE_CTX *);
 void	SSL_set_verify(SSL *s, int mode,
 	    int (*callback)(int ok, X509_STORE_CTX *ctx));
 void	SSL_set_verify_depth(SSL *s, int depth);
+// TODO: nak3
+void	SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg);
+void	SSL_CTX_set_cert_cb(SSL_CTX *ctx, int (*cb) (SSL *ssl, void *arg), void *arg);
+//
 int	SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 int	SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
