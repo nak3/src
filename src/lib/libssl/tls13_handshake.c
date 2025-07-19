@@ -252,6 +252,8 @@ const enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 
 const size_t handshake_count = sizeof(handshakes) / sizeof(handshakes[0]);
 
+#define TLS13_DEBUG 1
+
 #ifndef TLS13_DEBUG
 #define DEBUGF(...)
 #else
@@ -406,10 +408,18 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		if (ctx->alert != 0)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
-		if (sending)
+		if (sending) {
+			printf("@@@ a. send -- debug ret = %d\n", ret);
 			ret = tls13_handshake_send_action(ctx, action);
-		else
+			printf("@@@ send -- debug ret = %d\n", ret);
+		}
+		else {
+			printf("@@@ b. recv -- debug ret = %d\n", ret);
 			ret = tls13_handshake_recv_action(ctx, action);
+			printf("@@@ recv -- debug ret = %d\n", ret);
+		}
+
+		printf("@@@ debug ret = %d\n", ret);
 
 		if (ctx->alert != 0)
 			return tls13_send_alert(ctx->rl, ctx->alert);
@@ -432,9 +442,13 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			ctx->need_flush = tls13_handshake_end_of_flight(ctx,
 			    action);
 
+
 		if (!tls13_handshake_set_legacy_state(ctx))
 			return TLS13_IO_FAILURE;
+
 	}
+
+
 }
 
 static int
@@ -456,13 +470,24 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 
 	/* If we have no handshake message, we need to build one. */
 	if (ctx->hs_msg == NULL) {
+
 		if ((ctx->hs_msg = tls13_handshake_msg_new()) == NULL)
 			return TLS13_IO_FAILURE;
 		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb,
-		    action->handshake_type))
+		       	       action->handshake_type))
 			return TLS13_IO_FAILURE;
-		if (!action->send(ctx, &cbb))
+		if (!action->send(ctx, &cbb)) {
 			return TLS13_IO_FAILURE;
+		}
+		if (!tls13_handshake_msg_finish(ctx->hs_msg))
+			return TLS13_IO_FAILURE;
+	} else if (ctx->ssl->rwstate == SSL_X509_LOOKUP) {
+		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb,
+		       	       action->handshake_type))
+			return TLS13_IO_FAILURE;
+		if (!action->send(ctx, &cbb)) {
+			return TLS13_IO_FAILURE;
+		}
 		if (!tls13_handshake_msg_finish(ctx->hs_msg))
 			return TLS13_IO_FAILURE;
 	}
@@ -564,6 +589,7 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
 
+	printf("@@@ tls13_handshake_recv_action start 6\n");
 	return ret;
 }
 

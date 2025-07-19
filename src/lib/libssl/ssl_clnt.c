@@ -1765,7 +1765,7 @@ ssl3_get_server_done(SSL *s)
 	int ret;
 
 	if ((ret = ssl3_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
-	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE, 
+	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE,
 	    30 /* should be very small, like 0 :-) */)) <= 0)
 		return ret;
 
@@ -2174,38 +2174,57 @@ ssl3_send_client_certificate(SSL *s)
 
 	/* We need to get a client cert */
 	if (s->s3->hs.state == SSL3_ST_CW_CERT_B) {
-		/*
-		 * If we get an error, we need to
-		 * ssl->rwstate = SSL_X509_LOOKUP; return(-1);
-		 * We then get retried later.
-		 */
-		i = ssl_do_client_cert_cb(s, &x509, &pkey);
-		if (i < 0) {
-			s->rwstate = SSL_X509_LOOKUP;
-			return (-1);
-		}
-		s->rwstate = SSL_NOTHING;
-		if ((i == 1) && (pkey != NULL) && (x509 != NULL)) {
-			s->s3->hs.state = SSL3_ST_CW_CERT_B;
-			if (!SSL_use_certificate(s, x509) ||
-			    !SSL_use_PrivateKey(s, pkey))
+// TODO(nak3)
+		/* Prefer SSL_set_cert_cb over client_cert_cb. */
+		if (s->cert->cert_cb != NULL) {
+			printf("@@@ ssl client\n");
+			int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+			if (cb_ret < 0) {
+				s->rwstate = SSL_X509_LOOKUP;
+				return -1;
+			}
+			if (cb_ret == 0) {
+				s->s3->hs.tls12.cert_request = 2;
+				tls1_transcript_free(s);
+				s->s3->hs.state = SSL3_ST_CW_CERT_C;
+			} else {
+				s->s3->hs.state = SSL3_ST_CW_CERT_C;
+			}
+		} else {
+			/*
+			 * Fallback to legacy client_cert_cb.
+			 * If we get an error, we need to
+			 * ssl->rwstate = SSL_X509_LOOKUP; return(-1);
+			 * We then get retried later.
+			 */
+			i = ssl_do_client_cert_cb(s, &x509, &pkey);
+			if (i < 0) {
+				s->rwstate = SSL_X509_LOOKUP;
+				return (-1);
+			}
+			s->rwstate = SSL_NOTHING;
+			if ((i == 1) && (pkey != NULL) && (x509 != NULL)) {
+				s->s3->hs.state = SSL3_ST_CW_CERT_B;
+				if (!SSL_use_certificate(s, x509) ||
+				    !SSL_use_PrivateKey(s, pkey))
+					i = 0;
+			} else if (i == 1) {
 				i = 0;
-		} else if (i == 1) {
-			i = 0;
-			SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+				SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+			}
+
+			X509_free(x509);
+			EVP_PKEY_free(pkey);
+			if (i == 0) {
+				s->s3->hs.tls12.cert_request = 2;
+
+				/* There is no client certificate to verify. */
+				tls1_transcript_free(s);
+			}
+
+			/* Ok, we have a cert */
+			s->s3->hs.state = SSL3_ST_CW_CERT_C;
 		}
-
-		X509_free(x509);
-		EVP_PKEY_free(pkey);
-		if (i == 0) {
-			s->s3->hs.tls12.cert_request = 2;
-
-			/* There is no client certificate to verify. */
-			tls1_transcript_free(s);
-		}
-
-		/* Ok, we have a cert */
-		s->s3->hs.state = SSL3_ST_CW_CERT_C;
 	}
 
 	if (s->s3->hs.state == SSL3_ST_CW_CERT_C) {
