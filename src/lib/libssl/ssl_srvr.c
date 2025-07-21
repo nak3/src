@@ -2179,6 +2179,7 @@ ssl3_send_server_certificate(SSL *s)
 			if (cb_ret < 0) {
 				// 一時停止には未対応なので、エラーとして扱う
 //				SSLerror(s, SSL_R_CERT_CB_ERROR);
+				s->rwstate = SSL_X509_LOOKUP;
 				return 0;
 			}
 		}

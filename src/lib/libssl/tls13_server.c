@@ -651,9 +651,10 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 			goto err;
 		}
 		if (cb_ret < 0) {
-			ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+	//		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 			/* tls13_set_errorx(ctx, TLS13_ERR_CERT_CB_ERROR, 0, */
 			/* 		 "cert_cb returned negative", NULL); */
+			s->rwstate = SSL_X509_LOOKUP;
 			goto err;
 		}
 	}

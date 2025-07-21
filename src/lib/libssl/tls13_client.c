@@ -867,6 +867,7 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	X509 *cert;
 	int i, ret = 0;
 
+//	TODO(nak3)
 	if (s->cert->cert_cb != NULL) {
 	    	// Call cert_cb to update the certificate.
 	    	ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
@@ -878,8 +879,11 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	//	  	return ssl_hs_error;
 		}
 	    	if (ret < 0) {
+			s->rwstate = SSL_X509_LOOKUP;
+			goto err;
 	//	  	hs->tls13_state = state_send_client_certificate;
 	//	  	return ssl_hs_x509_lookup;
+
 	    	}
 	}
 

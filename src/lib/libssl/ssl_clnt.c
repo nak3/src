@@ -2174,7 +2174,7 @@ ssl3_send_client_certificate(SSL *s)
 
 	/* We need to get a client cert */
 	if (s->s3->hs.state == SSL3_ST_CW_CERT_B) {
-
+// TODO(nak3)
 		/* Prefer SSL_set_cert_cb over client_cert_cb. */
 		if (s->cert->cert_cb != NULL) {
 			int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
