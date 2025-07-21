@@ -324,7 +324,7 @@ typedef struct ssl_cert_st {
 
 	int references; /* >1 only if SSL_copy_session_id is used */
 
-// TODO(nak3)	
+// TODO(nak3)
 	/* XXX Callbacks */
 
 	/* Certificate setup callback: if set is called whenever a
@@ -734,7 +734,12 @@ struct ssl_ctx_st {
 	int (*app_verify_callback)(X509_STORE_CTX *, void *);
 	    void *app_verify_arg;
 
-	/* get client cert callback */
+	/*
+	 * get client cert callback
+	 *
+	 * TODO:(nak3)
+	 * Deprecated: Use SSL_CTX_set_cert_cb or SSL_set_cert_cb instead.
+	 */
 	int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
 	/* cookie generate callback */
