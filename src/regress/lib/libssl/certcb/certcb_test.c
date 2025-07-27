@@ -20,8 +20,10 @@ cert_cb(SSL *ssl, void *arg)
 
 	fprintf(stderr, "[cert_cb][%s] called (called=%d)\n", ci->who, ci->called);
 
-	if (ci->simulate_lookup_delay && ci->called++ == 0)
+	if (ci->simulate_lookup_delay && ci->called++ == 0) {
+		fprintf(stderr, "[cert_cb][%s] called (called=%d)\n", ci->who, ci->called);
 		return -1; /* simulate deferred lookup */
+	}
 
 	if (SSL_use_certificate_chain_file(ssl, ci->cert_path) != 1) {
 		fprintf(stderr, "[cert_cb][%s] SSL_use_certificate_file failed\n",
@@ -103,8 +105,11 @@ run_test(const char *server_key, const char *server_cert,
 			int r = SSL_do_handshake(client_ssl);
 			if (r == 1) {
 				client_done = 1;
+				printf("@@@ client done\n");
+				fprintf(stderr, "[client done]\n");
 			} else {
 				int err = SSL_get_error(client_ssl, r);
+				printf("@@@ client err = %d\n", err);
 				if (err != SSL_ERROR_WANT_READ &&
 				    err != SSL_ERROR_WANT_WRITE &&
 				    err != SSL_ERROR_WANT_X509_LOOKUP)
@@ -115,8 +120,11 @@ run_test(const char *server_key, const char *server_cert,
 			int r = SSL_do_handshake(server_ssl);
 			if (r == 1) {
 				server_done = 1;
+				printf("@@@ server done\n");
+				fprintf(stderr, "[server done]\n");
 			} else {
 				int err = SSL_get_error(server_ssl, r);
+				printf("@@@ server err = %d\n", err);
 				if (err != SSL_ERROR_WANT_READ &&
 				    err != SSL_ERROR_WANT_WRITE &&
 				    err != SSL_ERROR_WANT_X509_LOOKUP)
@@ -136,6 +144,7 @@ run_test(const char *server_key, const char *server_cert,
 	}
 
  cleanup:
+	printf("@@@ cleanup\n");
 	if (ret != 0)
 		ERR_print_errors_fp(stderr);
 	SSL_free(server_ssl);

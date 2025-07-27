@@ -69,6 +69,11 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
+	// TODO
+	printf("changing ? ssl->rwstate = %d\n", ssl->rwstate);
+	if (ssl->rwstate == SSL_X509_LOOKUP) {
+		return len;
+	}
 	ssl->rwstate = SSL_WRITING;
 	errno = 0;
 
@@ -82,7 +87,7 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
-	if (n == len)
+	if (n == len && ssl->rwstate != SSL_X509_LOOKUP)
 		ssl->rwstate = SSL_NOTHING;
 
 	return n;
@@ -171,6 +176,15 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	if (ret > 0)
 		return ret;
 
+	printf("ret = %d, ssl->rwstate=%d\n", ret, ssl->rwstate);
+	printf("changing in return code ? ssl->rwstate = %d\n", ssl->rwstate);
+	if (ssl->rwstate == SSL_X509_LOOKUP) {
+		return -1;
+	}
+
+	if (ret == TLS13_IO_ALERT) {
+		return 0;
+	}
 	ssl->rwstate = SSL_NOTHING;
 
 	switch (ret) {

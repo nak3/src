@@ -869,6 +869,7 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 
 //	TODO(nak3)
 	if (s->cert->cert_cb != NULL) {
+		printf("@@@ tls13 client\n");
 	    	// Call cert_cb to update the certificate.
 	    	ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
 	    	if (ret == 0) {
@@ -880,6 +881,9 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 		}
 	    	if (ret < 0) {
 			s->rwstate = SSL_X509_LOOKUP;
+			/* tls13_set_errorx(ctx, TLS13_ERR_NO_CERTIFICATE, 0, */
+			/*  		 "cert_cb returned negative", NULL); */
+			printf("@@@ tls13 erorr - client error\n");
 			goto err;
 	//	  	hs->tls13_state = state_send_client_certificate;
 	//	  	return ssl_hs_x509_lookup;

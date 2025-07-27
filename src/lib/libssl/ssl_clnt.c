@@ -2177,6 +2177,7 @@ ssl3_send_client_certificate(SSL *s)
 // TODO(nak3)
 		/* Prefer SSL_set_cert_cb over client_cert_cb. */
 		if (s->cert->cert_cb != NULL) {
+			printf("@@@ ssl client\n");
 			int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
 			if (cb_ret < 0) {
 				s->rwstate = SSL_X509_LOOKUP;

@@ -523,6 +523,7 @@ ssl3_accept(SSL *s)
 			 * unconditionally.
 			 */
 			s->rwstate = SSL_WRITING;
+			printf("@@@flush\n");
 			if (BIO_flush(s->wbio) <= 0) {
 				if (SSL_is_dtls(s)) {
 					/* If the write error was fatal, stop trying. */
