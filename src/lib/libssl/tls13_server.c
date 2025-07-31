@@ -549,6 +549,7 @@ int
 tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	CBB certificate_request_context;
+	printf("@@@ tls13_server_certificate_request_send ?\n");
 
 	if (!CBB_add_u8_length_prefixed(cbb, &certificate_request_context))
 		goto err;
@@ -641,26 +642,23 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 
 
 	// TODO(nak3)
+
+	printf("@@@ tls13_server_certificate_send\n");
 /* Call cert_cb to allow application to set certificate dynamically */
 	if (s->cert->cert_cb != NULL) {
+		printf("@@@ calling\n");
 		int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
 		if (cb_ret == 0) {
-			ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
-			/* tls13_set_errorx(ctx, TLS13_ERR_CERT_CB_ERROR, 0, */
-			/* 		 "cert_cb returned 0", NULL); */
+    			SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
 			goto err;
 		}
 		if (cb_ret < 0) {
-	//		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
-			/* tls13_set_errorx(ctx, TLS13_ERR_NO_CERTIFICATE, 0, */
-			/*  		 "cert_cb returned negative", NULL); */
-			printf("@@@ tls13 server error s=%p \n", s);
 			s->rwstate = SSL_X509_LOOKUP;
-			return 1;
-//			goto err;
+			goto err;
 		}
+
+		s->rwstate = SSL_NOTHING;
 	}
-	// ----
 
 	if (!tls13_server_select_certificate(ctx, &cpk, &sigalg))
 		goto err;
@@ -672,13 +670,10 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 		    "no server certificate", NULL);
 		goto err;
 	}
-
 	ctx->hs->tls13.cpk = cpk;
 	ctx->hs->our_sigalg = sigalg;
-
 	if ((chain = cpk->chain) == NULL)
 		chain = s->ctx->extra_certs;
-
 	if (chain == NULL && !(s->mode & SSL_MODE_NO_AUTO_CHAIN)) {
 		if ((xsc = X509_STORE_CTX_new()) == NULL)
 			goto err;
@@ -690,15 +685,12 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 		ERR_clear_error();
 		chain = X509_STORE_CTX_get0_chain(xsc);
 	}
-
 	if (!CBB_add_u8_length_prefixed(cbb, &cert_request_context))
 		goto err;
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
 		goto err;
-
 	if (!tls13_cert_add(ctx, &cert_list, cpk->x509, tlsext_server_build))
 		goto err;
-
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		cert = sk_X509_value(chain, i);
 
@@ -742,6 +734,9 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 	const SSL_CERT_PKEY *cpk;
 	CBB sig_cbb;
 	int ret = 0;
+
+
+	printf("@@@ tls13_server_certificate_verify_send ?\n");
 
 	memset(&sig_cbb, 0, sizeof(sig_cbb));
 

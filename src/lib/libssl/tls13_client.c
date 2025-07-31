@@ -868,27 +868,21 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	int i, ret = 0;
 
 //	TODO(nak3)
+
+	printf("@@@ tls13_client_certificate_send\n");
 	if (s->cert->cert_cb != NULL) {
 		printf("@@@ tls13 client\n");
 	    	// Call cert_cb to update the certificate.
 	    	ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
 	    	if (ret == 0) {
-    //			SSLerror(s, SSL_R_CERT_CB_ERROR);
-			//
-	//	  	ssl_send_alert(ssl, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-	//	  	OPENSSL_PUT_ERROR(SSL, SSL_R_CERT_CB_ERROR);
-	//	  	return ssl_hs_error;
+    			SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+			goto err;
 		}
 	    	if (ret < 0) {
 			s->rwstate = SSL_X509_LOOKUP;
-			/* tls13_set_errorx(ctx, TLS13_ERR_NO_CERTIFICATE, 0, */
-			/*  		 "cert_cb returned negative", NULL); */
-			printf("@@@ tls13 erorr - client error\n");
 			goto err;
-	//	  	hs->tls13_state = state_send_client_certificate;
-	//	  	return ssl_hs_x509_lookup;
-
 	    	}
+		s->rwstate = SSL_NOTHING;
 	}
 
 	if (!tls13_client_select_certificate(ctx, &cpk, &sigalg))

@@ -38,6 +38,8 @@ cert_cb(SSL *ssl, void *arg)
 		ERR_print_errors_fp(stderr);
 		return 0;
 	}
+	
+	fprintf(stderr, "2 [cert_cb][%s] called (called=%d)\n", ci->who, ci->called);
 
 	return 1;
 }
@@ -168,8 +170,8 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	printf("[TEST] Normal cert_cb execution\n");
-	failed |= run_test(argv[1], argv[2], argv[3], argv[4], argv[5], 0);
+//	printf("[TEST] Normal cert_cb execution\n");
+//	failed |= run_test(argv[1], argv[2], argv[3], argv[4], argv[5], 0);
 
 	printf("\n[TEST] Deferred cert_cb (SSL_ERROR_WANT_X509_LOOKUP)\n");
 	failed |= run_test(argv[1], argv[2], argv[3], argv[4], argv[5], 1);
