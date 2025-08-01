@@ -638,8 +638,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	STACK_OF(X509) *chain;
 	SSL_CERT_PKEY *cpk;
 	X509 *cert;
-	int i, ret = 0;
-
+	int i, cb_ret, ret = 0;
 
 	// TODO(nak3)
 
@@ -647,7 +646,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 /* Call cert_cb to allow application to set certificate dynamically */
 	if (s->cert->cert_cb != NULL) {
 		printf("@@@ calling\n");
-		int cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
+		cb_ret = s->cert->cert_cb(s, s->cert->cert_cb_arg);
 		if (cb_ret == 0) {
     			SSLerror(s, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
 			goto err;
@@ -893,8 +892,11 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	const uint8_t *p;
 	int ret = 0;
 
+	printf("@@@ tls13_client_certificate_recv\n");
+
 	if (!CBS_get_u8_length_prefixed(cbs, &cert_request_context))
 		goto err;
+	printf("@@@ tls13_client_certificate_recv 2\n");
 	if (CBS_len(&cert_request_context) != 0)
 		goto err;
 	if (!CBS_get_u24_length_prefixed(cbs, &cert_list))
@@ -907,6 +909,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		    "peer did not provide a certificate", NULL);
 		goto err;
 	}
+	printf("@@@ tls13_client_certificate_recv 3\n");
 
 	if ((certs = sk_X509_new_null()) == NULL)
 		goto err;
@@ -928,6 +931,8 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		cert = NULL;
 	}
 
+	printf("@@@ 2\n");
+
 	/*
 	 * At this stage we still have no proof of possession. As such, it would
 	 * be preferable to keep the chain and verify once we have successfully
@@ -939,11 +944,15 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		    "failed to verify peer certificate", NULL);
 		goto err;
 	}
+
+	printf("@@@ 3\n");
 	s->session->verify_result = s->verify_result;
 	ERR_clear_error();
 
 	if (!tls_process_peer_certs(s, certs))
 		goto err;
+
+	printf("@@@ 4\n");
 
 	ctx->handshake_stage.hs_type |= WITH_CCV;
 	ret = 1;

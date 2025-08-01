@@ -174,6 +174,8 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	printf("ret = %d, ssl->rwstate=%d\n", ret, ssl->rwstate);
 	printf("changing in return code ? ssl->rwstate = %d\n", ssl->rwstate);
 
+
+
 	// TODO
 	if (ssl->rwstate != SSL_X509_LOOKUP) {
 		ssl->rwstate = SSL_NOTHING;
@@ -187,6 +189,14 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 
 	case TLS13_IO_FAILURE:
 		tls13_legacy_error(ssl);
+
+		unsigned long l;
+		if ((l = ERR_peek_error()) != 0) {
+			printf("@@@  22 yes error\n");
+		} else {
+			printf("@@@ 22 no error\n");
+		}
+
 		return -1;
 
 	case TLS13_IO_ALERT:
